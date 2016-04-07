@@ -1,2 +1,6 @@
 # scene_processing
-Scripts to prep LandTrendr image processing wrappers at TSA level.
+Scripts to run LandTrendr image processing source code at TSA level.
+
+Source code link: https://github.com/KennedyResearch/LandTrendr-2012
+
+
