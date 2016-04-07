@@ -26,8 +26,6 @@ prep_script.py convert 036031 1
 Notes:
 This runs DEFAULT state of processing scripts. If you wish to change defaults, choose '0' 
 for the 3rd input & edit batch file before submitting the job to the cluster.
-
-UPDATED FOR ISLAY.COAS.OREGONSTATE.EDU SERVER 10/13/2015 - tara
 '''
 import os, sys, subprocess
 import datetime
@@ -38,24 +36,15 @@ import getParams  #module in scene_processing folder
 TS = str(datetime.datetime.now())
 STAMP = "Created via {0} on {1}".format(os.path.basename(__file__),TS)
 SCENES = "/vol/v1/scenes" #folders where scenes are (sepated by ':')
-SCENES_NN5 = "/vol/v1/scenes_nn5"
 #below is where qsub & batchfile templates are held
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates") 
 
 class proSets:
     '''Processing Step sets used throughout this script'''
-    segs = ["seg", "seg_w", "sega", "seg_band5"]
-    segs_n55 = ["seg_nn5", "seg_w_n55", "sega_n55", "seg_band5_n55"]   
-    labs = ["lab_mr224", "lab_mr227",  "lab_mr224_w", "lab_mr227_w", "lab_nbr", 
-    		"lab_band5", "lab_nccn"]
-    labs_nn5 = ["lab_mr224_nn5", "lab_mr227_nn5",  "lab_mr224_w_nn5", 
-    			"lab_mr227_w_nn5", "lab_nbr_nn5", "lab_band5_nn5", "lab_nccn_nn5"]
+    segs = ["seg", "seg_w", "sega", "seg_band5"]     
+    labs = ["lab_mr224", "lab_mr227",  "lab_mr224_w", "lab_mr227_w", "lab_nbr", "lab_band5", "lab_nccn"]
     #'hist' is just a placeholder, not a valid processing step for this script
-    hists = ["hist", "hist_plusmask", "hist_w", "hist_w_nomask", "hist_band5_nomask", 
-    		 "hist_nomask"]  
-    hists_nn5 = ["hist_nn5", "hist_plusmask_nn5", "hist_w_nn5", "hist_w_nomask_nn5", 
-    			 "hist_band5_nomask_nn5", "hist_nomask_nn5"]      
-    			 
+    hists = ["hist", "hist_plusmask", "hist_w", "hist_w_nomask", "hist_band5_nomask", "hist_nomask"]         
     
 def fillTemplatesAndSubmit(aProcessJob, subNow):
     '''This function writes batch files & qsub file based off ProcessJob class instance 
@@ -72,9 +61,9 @@ def fillTemplatesAndSubmit(aProcessJob, subNow):
     #submit job in background
     shellScript = aProcessJob.fileNames[0]
     if subNow:
-    	logfile = os.path.join(aProcessJob.topDir, "scripts", os.path.splitext(shellScript)[0]+".log")
-        subprocess.call('silentRun "sh ' + shellScript + '" --logfile=' + logfile, shell=True)
-    
+        subprocess.call('sh ' + shellScript + ' > ' + 
+        				os.path.join(aProcessJob.topDir,"scripts",os.path.splitext(shellScript)[0]+".log") + 
+        				' 2>&1 &', shell=True)
     else:
         print "Shell script has been placed here: '{0}'. Job not submitted. \n\n Exiting.".format(shellScript)
                  
@@ -92,8 +81,8 @@ class ProcessJob:
         #useful definitions for every process
         shrtPR = self.scene[1:3] + self.scene[4:6]
         scriptsDir = os.path.join(self.topDir, "scripts")
-        #errorDir = os.path.join(self.topDir, "error_output_files")
-        shellDict = {'stamp': STAMP} #common qsub script parameters
+        errorDir = os.path.join(self.topDir, "error_output_files")
+        shellDict = {'stamp': STAMP, 'error_dir': errorDir} #common qsub script parameters
 
         #conversion process writes "convert_ledaps.py"
         if process == "convert":
@@ -103,7 +92,8 @@ class ProcessJob:
             shellScriptName = os.path.join(scriptsDir, "cl{0}.sh".format(self.scene))
             self.fileNames.extend([shellScriptName, batchFileName])
   
-            shellDict_convert = { 'script': "python " + batchFileName} #shell script template parameters unique to conversion
+            shellDict_convert = {'slots': "16", 'run_time': "24:00:00", #qub template parameters unique to conversion
+                'job_name': "conv{0}".format(shrtPR), 'script': "python " + batchFileName}
             shellDict = dict(shellDict.items() + shellDict_convert.items())
             self.paramDicts.extend([shellDict, getParams.convert(self.scene, self.topDir)]) #list order is important!
             
@@ -113,7 +103,8 @@ class ProcessJob:
         elif process == "fmask_fix":
             self.fileNames.append(os.path.join(scriptsDir,"ffix{0}.sh".format(self.scene)))
             #qub template parameters unique to fmask
-            shellDict_fmask = {'script': "FFrek.py {0} {1}\nFmask_fix.py {0} {1} -v 25\nmask_replace.py {0} {1}".format(self.scene,self.topDir)}
+            shellDict_fmask = {'slots': "1", 'run_time': "24:00:00", 'job_name': "ff{0}".format(shrtPR),
+                'script': "FFrek.py {0} {1}\nFmask_fix.py {0} {1} -v 25\nmask_replace.py {0} {1}".format(self.scene,self.topDir)}
             shellDict = dict(shellDict.items() + shellDict_fmask.items())   
             self.paramDicts.append(shellDict)
 				
@@ -138,69 +129,34 @@ class ProcessJob:
             
             if process == "seg_eval":
                 shellScriptName = "segeval{0}.sh".format(self.scene)
+                jobName = "sevl{0}".format(shrtPR)
+                runTime = "24:00:00"
             else:
                 ind = proSets.segs.index(process)
-                segNum = "%02d" %(ind+1,) #for script naming purposes
+                segNum = "%02d" %(ind+1,) #for qsub job naming purposes
                 shellScriptName = "seg{0}_{1}.sh".format(segNum,self.scene)
+                jobName = "se{0}.{1}".format(segNum,shrtPR)
+                runTime = "120:00:00"
             self.fileNames.extend([os.path.join(scriptsDir,shellScriptName), batchFileName])
             #qub template parameters unique to segmentation
-            shellDict_seg = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"}
+            shellDict_seg = {'slots': "1", 'run_time': runTime, 'job_name': jobName, 'script': "idl " + batchFileName[:-4]}
             shellDict = dict(shellDict.items() + shellDict_seg.items())
             self.paramDicts.extend([shellDict, getParams.seg(self.scene, self.topDir, process)]) #list order is important!
-            
-        #segmentation processes writes "run_ledaps_landtrendr_process.pro"
-        #nn5 version overwrites directories
-        elif process in proSets.segs_n55:
-        	self.topDir = os.path.join(SCENES_NN5, self.scene)#OVERWRITE DIRECTORY PATHS
-        	
-        	scriptsDir = os.path.join(self.topDir, "scripts")
-        	
-        	template = "run_ledaps_landtrendr_processor{0}.pro"
-        	self.tempNames.append(template.format(''))
-        	
-        	batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene+process.replace('seg','')))
-        	ind = proSets.segs_nn5.index(process)
-        	segNum = "%02d" %(ind+1,) #for script naming purposes
-        	shellScriptName = "seg{0}_{1}.sh".format(segNum,self.scene)
-        	self.fileNames.extend([os.path.join(scriptsDir,shellScriptName), batchFileName])
-        	
-        	#qub template parameters unique to segmentation
-        	shellDict_seg = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"}
-        	shellDict = dict(shellDict.items() + shellDict_seg.items())
-        	self.paramDicts.extend([shellDict, getParams.seg(self.scene, self.topDir, process)]) #list order is important!
-            
+        
         #change label processes write "run_lt_labelfilt.pro" 
         elif process in proSets.labs:
             template = "run_lt_labelfilt{0}.pro"
             self.tempNames.append(template.format(''))
             batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene+process.replace('lab','')))
             ind = proSets.labs.index(process)
-            labNum = "%02d" %(ind+1,) #for shell script naming purposes
+            labNum = "%02d" %(ind+1,) #for qsub job naming purposes
             shellScriptName = os.path.join(scriptsDir, "lab{0}_{1}.sh".format(labNum, self.scene))
             self.fileNames.extend([shellScriptName, batchFileName])
             
-            shellDict_lab = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"} #qub template parameters unique to labelling
+            shellDict_lab = {'slots': "2", 'run_time': "24:00:00", 'job_name': "lab{0}.{1}".format(labNum,shrtPR), 
+                'script': "idl " + batchFileName[:-4]} #qub template parameters unique to labelling
             shellDict = dict(shellDict.items() + shellDict_lab.items())
             self.paramDicts.extend([shellDict, getParams.lab(self.topDir, process)]) #list order is important!
-            
-        #change label processes write "run_lt_labelfilt.pro" 
-        #nn5 version overwrites directories
-        elif process in proSets.labs_nn5:
-        	#OVERWRITE DIRECTORY PATHS
-        	self.topDir = os.path.join(SCENES_NN5, self.scene)
-        	scriptsDir = os.path.join(self.topDir, "scripts")
-        	
-        	template = "run_lt_labelfilt{0}.pro"
-        	self.tempNames.append(template.format(''))
-        	batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene+process.replace('lab','')))
-        	ind = proSets.labs.index(process)
-        	labNum = "%02d" %(ind+1,) #for shell script naming purposes
-        	shellScriptName = os.path.join(scriptsDir, "lab{0}_{1}.sh".format(labNum, self.scene))
-        	self.fileNames.extend([shellScriptName, batchFileName])
-        	
-        	shellDict_lab = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"} #qub template parameters unique to labelling
-        	shellDict = dict(shellDict.items() + shellDict_lab.items())
-        	self.paramDicts.extend([shellDict, getParams.lab(self.topDir, process)]) #list order is important!
         
         #history variables processes write "create_history_variables_batchfile.pro"
         elif process in proSets.hists[1:]:
@@ -208,32 +164,14 @@ class ProcessJob:
             self.tempNames.append(template.format(''))
             batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene+process.replace('hist','')))
             ind = proSets.hists.index(process)
-            histNum = "%02d" %(ind+1,) #for shell script naming purposes
+            histNum = "%02d" %(ind+1,) #for qsub job naming purposes
             shellScriptName = os.path.join(scriptsDir, "hist{0}_{1}.sh".format(histNum, self.scene))
             self.fileNames.extend([shellScriptName, batchFileName])
             
-            shellDict_lab = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"} #qub template parameters unique to history vars
+            shellDict_lab = {'slots': "2", 'run_time': "24:00:00", 'job_name': "hist{0}.{1}".format(histNum,shrtPR), 
+                'script': "idl " + batchFileName[:-4]} #qub template parameters unique to history vars
             shellDict = dict(shellDict.items() + shellDict_lab.items())
             self.paramDicts.extend([shellDict, getParams.hist(self.topDir, process)]) #list order is important!
-            
-        #history variables processes write "create_history_variables_batchfile.pro"
-        #nn5 version overwrites directories
-        elif process in proSets.hists_nn5[1:]:
-        	#OVERWRITE DIRECTORY PATHS
-        	self.topDir = os.path.join(SCENES_NN5, self.scene)
-        	scriptsDir = os.path.join(self.topDir, "scripts")
-        	
-        	template = "create_history_variables_batchfile{0}.pro"
-        	self.tempNames.append(template.format(''))
-        	batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene+process.replace('hist','')))
-        	ind = proSets.hists.index(process)
-        	histNum = "%02d" %(ind+1,) #for shell script naming purposes
-        	shellScriptName = os.path.join(scriptsDir, "hist{0}_{1}.sh".format(histNum, self.scene))
-        	self.fileNames.extend([shellScriptName, batchFileName])
-        	
-        	shellDict_lab = {'script': "idl.84 <<!here\n@" + batchFileName + "\n!here\nexit"} #qub template parameters unique to history vars
-        	shellDict = dict(shellDict.items() + shellDict_lab.items())
-        	self.paramDicts.extend([shellDict, getParams.hist(self.topDir, process)]) #list order is important!
         
         #error handling -- inputted processing step not valid        
         else:

@@ -13,11 +13,13 @@ import os, sys
 import subprocess
 import sceneUtils as su
 
+LT_SCENES = "/vol/v1/scenes"
+
 def main(args):
     '''Extract command line args, find scene directory & construct ledaps command line'''
     if len(args) == 2:
         scene = args[1]    
-        topDirs = os.environ['LT_SCENES'].split(':') #directories where scenes are stored
+        topDirs = LT_SCENES.split(':') #directories where scenes are stored
         scenePath = su.findDir(scene,topDirs)
     else:
         sys.exit("Incorrect number of arguments. Input: [1]path_row \n\n Exiting Process.")

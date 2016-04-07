@@ -96,8 +96,8 @@ def validDirSetup(scene_dir, scene):
     if len(dirs_needed) > 0:
         print "\nMissing directory set-up requirements...\n"
         if os.path.join(scene_dir,ledaps) in dirs_needed:
-            print "LEDAPS outputs are missing. Cannot create this folder: {0}. Please run LEDAPS script first.".format(ledaps)
-            return False
+            print "WARNING: LEDAPS outputs are missing. Cannot create this folder: {0}. Might need to run LEDAPS script first.\n".format(ledaps)
+            return True
         else:
             for j in dirs_needed:
                 print "New Directory Made: {0} ".format(j)
