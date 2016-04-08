@@ -122,6 +122,18 @@ def convert(sceneNum, sceneDir):
         'outputPath': outputPath, 'tmpPath': tmpPath}
     
     return convertParams #dictionary of parameters
+    
+def convert_sr(sceneNum, sceneDir):
+    '''This function finds all necessary parameters for LandTrendr conversion process'''
+    projectionPath = PROJECTIONS + "/albers.txt"
+    targzPath = os.path.join(sceneDir,"tar_gz_files") 
+    outputPath = os.path.join(sceneDir,"images")
+    tmpPath = os.path.join(outputPath, "tmp") 
+    
+    convertParams = {'projectionPath': projectionPath, 'targzPath': targzPath,
+        'outputPath': outputPath, 'tmpPath': tmpPath}
+    
+    return convertParams #dictionary of parameters
    
 def cloudmask_fix(sceneNumber, sceneDir, cldmsk_ref_dates, fix_these_dates):
 	'''This function finds all necessary parameters for LandTrendr cloudmask fixation process'''

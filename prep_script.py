@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
 Title: prep_script.py
-Author: Tara Larrue (tlarrue@bu.edu)
+Author: Tara Larrue (tlarrue2991@gmail.com)
 
 This is an executable script that places a qsub bash script & python/idl batchfile
 into a scene folder, then runs them.
@@ -9,7 +9,7 @@ The bash script runs the indicated scene processing step for the indicated scene
 
 Inputs: 
 (1) processing step 
-        [choices- 'convert'; 'fmask_fix'; 'seg_eval'; 'cloudmask_fix'; 'seg'; 'seg_w'; 'seg_band5'
+        [choices- 'convert'; 'convert_sr'; 'fmask_fix'; 'seg_eval'; 'cloudmask_fix'; 'seg'; 'seg_w'; 'seg_band5'
         'lab_mr224'; 'lab_mr227'; 'lab_mr224_w'; 'lab_nbr'; 'lab_band5'; 'lab_nccn'
         'hist_nomask'; 'hist_plusmask', 'hist_w'; 'hist_w_nomask; 'hist_band5_nomask']
 (2) scene number string [format: PPPRRR]
@@ -106,6 +106,18 @@ class ProcessJob:
             shellDict_convert = { 'script': "python " + batchFileName} #shell script template parameters unique to conversion
             shellDict = dict(shellDict.items() + shellDict_convert.items())
             self.paramDicts.extend([shellDict, getParams.convert(self.scene, self.topDir)]) #list order is important!
+            
+        #conversion process writes "convert_sr.py"
+        elif process == "convert_sr":
+            template = "convert_sr{0}.py"
+            self.tempNames.append(template.format(''))
+            batchFileName = os.path.join(scriptsDir, template.format("_"+self.scene)) 
+            shellScriptName = os.path.join(scriptsDir, "clsr{0}.sh".format(self.scene))
+            self.fileNames.extend([shellScriptName, batchFileName])
+  
+            shellDict_convertsr = { 'script': "python " + batchFileName} #shell script template parameters unique to conversion
+            shellDict = dict(shellDict.items() + shellDict_convertsr.items())
+            self.paramDicts.extend([shellDict, getParams.convert_sr(self.scene, self.topDir)]) #list order is important!
             
         #fmask_fix calls 3 executable python scripts: "FFrek.py"; "Fmask_fix.py"; "mask_replace.py"
         #this uses default 25% threshold    
