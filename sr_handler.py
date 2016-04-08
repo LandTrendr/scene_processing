@@ -17,7 +17,7 @@ from osgeo import gdalconst
 from datetime import datetime
 
 try:
-	GDAL_DATA=os.environ['GDAL_DATA']
+	GDAL_DATA= '"' + os.environ['GDAL_DATA'] + '"'
 except KeyError:
 	GDAL_DATA = '"/usr/lib/anaconda/share/gdal"'
 
