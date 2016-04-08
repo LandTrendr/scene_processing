@@ -16,8 +16,10 @@ from osgeo import gdal
 from osgeo import gdalconst
 from datetime import datetime
 
-
-GDAL_DATA = '"/usr/lib/anaconda/share/gdal"'
+try:
+	GDAL_DATA=os.environ['GDAL_DATA']
+except KeyError:
+	GDAL_DATA = '"/usr/lib/anaconda/share/gdal"'
 
 def lt_basename(basename, appendix='sr.bsq', with_ts=True):
 	"""convert ledaps name to landtrendr name convention
