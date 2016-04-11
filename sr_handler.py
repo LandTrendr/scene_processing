@@ -21,7 +21,7 @@ try:
 except KeyError:
 	GDAL_DATA = '"/usr/lib/anaconda/share/gdal"'
 
-def lt_basename(basename, appendix='sr.bsq', with_ts=True):
+def lt_basename(basename, appendix='ledaps.bsq', with_ts=True):
 	"""convert ledaps name to landtrendr name convention
 
 	SR_DIR: LT50330292011232-SC20160302202648
@@ -84,7 +84,7 @@ def extract_tifs(sr_dir, output_path, proj_file):
         #import pdb; pdb.set_trace()
         
     #check if file has already been processed, return if it has
-	check_this_refl = os.path.join(this_outputdir, lt_basename(basedir, '', False)+'*sr.bsq')
+	check_this_refl = os.path.join(this_outputdir, lt_basename(basedir, '', False)+'*ledaps.bsq')
 	files = glob.glob(check_this_refl)
 	if len(files)>0: #file already been processed
 		print "Skipping " + sr_dir
@@ -126,7 +126,7 @@ def extract_tifs(sr_dir, output_path, proj_file):
 	
 	#reproject to albers
 	warp_cmd = 'gdalwarp -of ENVI -t_srs '+ proj_file +' -tr 30 30 -srcnodata "-9999 0" -dstnodata "-9999" {0} {1}'
-	this_refl = lt_basename(basedir, 'sr.bsq')
+	this_refl = lt_basename(basedir, 'ledaps.bsq')
 	print("reprojecting to " + this_refl)
 	os.system(warp_cmd.format(os.path.join(tmp_path, refl_file), os.path.join(this_outputdir, this_refl)))
 	
@@ -205,7 +205,7 @@ def create_ledaps_tc(refl_file, search):
 	tc = None
 
 	
-def processLandtrendrTC(img_dir, search='_sr.bsq'):
+def processLandtrendrTC(img_dir, search='_ledaps.bsq'):
 	"""process all reflectance image to tc
 		by default assuming file ends with _ledaps.bsq
 	"""
@@ -281,7 +281,7 @@ def fmask_to_ltmask(fmask_dir, fmask, out_dir, proj_file):
 	
 	#remove temporary file if all required files have been generated for an image
 	ltmask_base_notime = lt_basename(basename, '', False)
-	req_endings = ["*cloudmask.bsq", "*tc.bsq", "*sr.bsq"]
+	req_endings = ["*cloudmask.bsq", "*tc.bsq", "*ledaps.bsq"]
 	files_required = [os.path.join(out_dir, ltmask_base_notime+i) for i in req_endings]
 	req_bools = map(lambda x: len(glob.glob(x))==1, files_required)
 	
