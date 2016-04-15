@@ -113,16 +113,22 @@ def extract_tifs(sr_dir, output_path, proj_file):
 	for f in os.listdir(sr_dir):
 		if f.endswith('.tif') and ('_sr_band' in f) and ('band6' not in f):
 			this_file = f.replace('.tif','')[-5:] + ".bsq"
-			print('creating ' + this_file + '...')
+			print('creating ' + this_file + ' from ' + f + ' ...')
 			dataset = os.path.join(sr_dir, f)
 			os.system(tr_cmd.format(dataset, os.path.join(tmp_path, this_file)))
 			bands.append(os.path.join(tmp_path, this_file))
 	print(bands)
 	
+	#order bands
+	band_numbers = [int(os.path.basename(i).split(".")[0][-1]) for i in bands]
+	bands_ordered = [x for (y,x) in sorted(zip(band_numbers, bands))]
+	
 	merge_cmd = "gdal_merge.py -o {0} -of envi -separate -n -9999 {1}"
 				
 	print("stacking images to create " + refl_file)
-	os.system(merge_cmd.format(os.path.join(tmp_path, refl_file), ' '.join(bands[0:6])))	
+	os_cmd = merge_cmd.format(os.path.join(tmp_path, refl_file), ' '.join(bands_ordered[0:6]))
+	print(os_cmd)
+	os.system(os_cmd)	
 	
 	#reproject to albers
 	warp_cmd = 'gdalwarp -of ENVI -t_srs '+ proj_file +' -tr 30 30 -srcnodata "-9999 0" -dstnodata "-9999" {0} {1}'
