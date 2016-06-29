@@ -5,7 +5,7 @@ retall
 ;---please state the landsat path/row ID and path to the data as described following each variable---
 ppprrr = '{{sceneNumber}}' ; ex. '046026' -MUST BE PPP (path) and RRR (row), three digits for both path and row, use zero if needed ex: '0PP0RR'
 path = '{{sceneDir}}/' ; ex. 'F:\046026\' -MAKE SURE THERE IS A "\" AT THE END, must point to a drive path, even if on a server
-template_header = "/projectnb/trenders/helperfiles/mrlc_template_headerfile.hdr" ;give the full path to a template projection header (.hdr) file
+template_header = "/vol/v1/general_files/helperfiles/mrlc_template_headerfile.hdr" ;give the full path to a template projection header (.hdr) file
 
 ;select method 1: thresholds clouds\shadows based on image bands fixing method
 cldmsk_fix_method = [1]

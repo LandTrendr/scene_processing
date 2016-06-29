@@ -17,6 +17,7 @@ from osgeo import gdalconst
 from gdalconst import *
 from shutil import *
 
+LT_USEAREA_MASKS = "/vol/v1/scenes/gnn_snapped_cmon_usearea_files"
 
 def create_mask(sample, list, maskval=1):
 	""" Create mask from GDALDataset if all band values equal to maskval """
@@ -39,7 +40,7 @@ if 1 is 1:
 	scene = sys.argv[1]
 	scenepath = sys.argv[2]
         
-	useareaTopDir = os.environ['LT_USEAREA_MASKS']
+	useareaTopDir = LT_USEAREA_MASKS
 	useareaPath = '{0}/{1}_usearea.bsq'.format(useareaTopDir,scene)
 	print '\nUsearea Path is {0}'.format(useareaPath)
  

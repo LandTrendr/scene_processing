@@ -3,6 +3,9 @@
 import os, sys
 from osgeo import gdal, ogr
 
+LANDSAT_POLYGONS = "/vol/v1/general_files/datasets/spatial_data/landsat_polygons"
+LT_USEAREA_MASKS = "/vol/v1/scenes/gnn_snapped_cmon_usearea_files"
+
 def formatScene(scene):
     return "{0}{1}".format(int(scene[0:3]), scene[3:6].zfill(3))
 
@@ -60,8 +63,8 @@ def updateHeader(oldHeader, refCoords):
     os.rename(newHeader, oldHeader)
     
 def main(scenes): 
-    inputFolder = os.environ['LANDSAT_POLYGONS']
-    outputFolder = os.environ['LT_USEAREA_MASKS']
+    inputFolder = LANDSAT_POLYGONS
+    outputFolder = LT_USEAREA_MASKS
     scenesFile = "wrs_buffer.shp"
     buffer_distance = 2 #  km
     scene_field = "WRS_ALB__1"

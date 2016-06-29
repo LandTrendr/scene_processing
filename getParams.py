@@ -1,15 +1,15 @@
 '''
 Title: getParams.py
-Author: Tara Larrue (tlarrue@bu.edu)
+Author: Tara Larrue (tlarrue2991@gmail.com)
 
 This python module contains scene processing functions to get batchfile parameters
 '''
 import os, sys
 import glob
 
-HELPERFILES = os.environ['LT_HELPERS']
-PROJECTIONS = os.environ['LT_PROJECTIONS']
-USEAREAS = os.environ['LT_USEAREA_MASKS']
+HELPERFILES = "/vol/v1/general_files/helperfiles"
+PROJECTIONS = "/vol/v1/general_files/projections"
+USEAREAS = "/vol/v1/scenes/gnn_snapped_cmon_usearea_files"
 
 class globalParams:
     templateHdr = os.path.join(HELPERFILES, "mrlc_template_headerfile.hdr")
@@ -122,10 +122,23 @@ def convert(sceneNum, sceneDir):
         'outputPath': outputPath, 'tmpPath': tmpPath}
     
     return convertParams #dictionary of parameters
+    
+def convert_sr(sceneNum, sceneDir):
+    '''This function finds all necessary parameters for LandTrendr conversion process'''
+    projectionPath = PROJECTIONS + "/albers.txt"
+    targzPath = os.path.join(sceneDir,"tar_gz_files") 
+    outputPath = os.path.join(sceneDir,"images")
+    tmpPath = os.path.join(outputPath, "tmp") 
+    
+    convertParams = {'projectionPath': projectionPath, 'targzPath': targzPath,
+        'outputPath': outputPath, 'tmpPath': tmpPath}
+    
+    return convertParams #dictionary of parameters
    
 def cloudmask_fix(sceneNumber, sceneDir, cldmsk_ref_dates, fix_these_dates):
 	'''This function finds all necessary parameters for LandTrendr cloudmask fixation process'''
-	cloudParams = {'sceneNumber':sceneNumber, 'sceneDir': sceneDir, 'cldmsk_ref_dates': cldmsk_ref_dates, 'fix_these_dates':fix_these_dates}
+	cloudParams = {'sceneNumber':sceneNumber, 'sceneDir': sceneDir, 
+				   'cldmsk_ref_dates': cldmsk_ref_dates, 'fix_these_dates':fix_these_dates}
 	return cloudParams #dictionary of parameters
 	 
 	

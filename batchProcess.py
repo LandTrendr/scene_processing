@@ -16,7 +16,7 @@ Outputs:
 
 Note: shell batchfile will be named the same as input params text file
 
-Example: batch_scene_process.py /projectnb/trenders/scenes/batches/params.txt /projectnb/trenders/scenes/batches/
+Example: batch_scene_process.py /vol/v1/scenes/batches/params.txt /vl/v1/scenes/batches/
 Params File:
 "Running conversion for MT Scenes
 035035 conversion
@@ -26,9 +26,10 @@ Params File:
 import os, sys
 import subprocess
 
-    
+LT_USEAREA_MASKS = "/vol/v1/scenes/gnn_snapped_cmon_usearea_files"
+
 def usearea_missing(scene):
-    uaFolder = os.environ['LT_USEAREA_MASKS']
+    uaFolder = LT_USEAREA_MASKS
     ua_bsq = os.path.join(uaFolder, scene+"_usearea.bsq")
     ua_hdr = os.path.join(uaFolder, scene+"_usearea.hdr")
     return not (os.path.exists(ua_bsq) and os.path.exists(ua_hdr))
